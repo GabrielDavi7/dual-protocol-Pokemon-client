@@ -1,12 +1,15 @@
-# Ambientes Virtuais
-venv/
-env/
-ENV/
+# Ambientes Virtuais (Backend)
+backend/venv/
+backend/env/
 
 # Arquivos de Cache do Python
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Dependências (Frontend)
+node_modules/
+dist/
 
 # Configurações do VS Code e SO
 .vscode/
