@@ -1,48 +1,31 @@
-# <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" width="35" align="center"> Pokedex Web Services IntegratorPokedex Web Services Integrator
+# <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png" width="35" align="center"> Trabalho Prático: Web Services (REST e SOAP)
 
-Aplicação desenvolvida como atividade prática da disciplina de **Sistemas Distribuídos / Web Services**. O projeto demonstra a integração de dois ecossistemas tecnológicos em uma única aplicação:
+Este repositório contém a entrega da atividade prática da disciplina de **Sistemas Distribuídos / Web Services**.
 
-- uma API **REST**, com respostas em JSON;
-- um Web Service **SOAP**, com mensagens em XML.
+O objetivo do projeto é explorar a diversidade tecnológica de ecossistemas web através da pesquisa e do consumo prático de Web Services reais disponíveis publicamente, separando as implementações em duas aplicações independentes.
 
-## Objetivo
+---
 
-O projeto funciona como uma Pokédex de batalha. A aplicação recebe o nome de um Pokémon, consulta seus atributos na PokeAPI e envia os valores de Ataque e Defesa para um serviço SOAP, que calcula a soma desses atributos.
+## 📁 Estrutura do Repositório
 
-## Fluxo da aplicação
+Para facilitar a avaliação e isolar os ecossistemas, o projeto foi dividido em dois diretórios principais:
 
-1. O nome do Pokémon é recebido pela aplicação.
-2. O backend consulta a [PokeAPI](https://pokeapi.co/docs/v2) usando REST.
-3. Os valores de Ataque e Defesa são extraídos da resposta JSON.
-4. Os valores são enviados para a operação `Add` do serviço SOAP.
-5. O resultado da soma é retornado como o Poder de Combate (CP) do Pokémon.
+- **[`/rest`](./rest/)**: Aplicação Full-Stack (Python/FastAPI + React) consumindo a PokeAPI.
+- **[`/soap`](./soap/)**: Aplicação consumindo um Web Service baseado em WSDL _(a ser definido pela equipe)_.
 
-## Tecnologias e serviços
+Cada diretório possui seu próprio `README.md` com instruções detalhadas de instalação, execução e exemplos dos dados trafegados.
 
-- **Backend:** Python
-- **API REST:** [PokeAPI](https://pokeapi.co/docs/v2)
-- **Web Service SOAP:** [DNE Online Calculator](http://www.dneonline.com/calculator.asmx?WSDL)
-- **Bibliotecas Python:** `requests` e `zeep`
-- **Frontend:** React/Vite (planejado)
+---
 
-## Estrutura do projeto
+## 🌐 1. Aplicação REST (Pokédex)
 
-```text
-dual-protocol-Pokemon-client/
-├── .gitignore
-├── README.md
-├── backend/
-│   ├── app.py
-│   └── requirements.txt
-└── frontend/
-    └── (interface gráfica planejada)
-```
+A aplicação localizada na pasta `/rest` funciona como uma Pokédex que consome a [PokeAPI (The RESTful Pokémon API)](https://pokeapi.co/docs/v2).
 
-## Exemplos de dados
+- **Arquitetura:** Frontend em React (Vite) e Backend em Python (FastAPI).
+- **Formato de Dados:** JSON.
+- **Exemplo de Retorno:** Ao buscar os dados, a API recebe a estrutura abaixo:
 
-### Resposta REST
-
-Exemplo de dados relevantes retornados pela PokeAPI para o Pokémon <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/384.png" width="45" align="center">
+<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/384.png" width="45" align="center"> **Exemplo (Rayquaza):**
 
 ```json
 {
@@ -50,76 +33,22 @@ Exemplo de dados relevantes retornados pela PokeAPI para o Pokémon <img src="ht
   "stats": [
     {
       "base_stat": 150,
-      "stat": {
-        "name": "attack",
-        "url": "https://pokeapi.co/api/v2/stat/2/"
-      }
-    },
-    {
-      "base_stat": 90,
-      "stat": {
-        "name": "defense",
-        "url": "https://pokeapi.co/api/v2/stat/3/"
-      }
+      "stat": { "name": "attack" }
     }
   ]
 }
 ```
 
-### Resposta SOAP
+> **Instruções de execução:** Para rodar a aplicação REST, acesse a pasta [`/rest`](./rest/) e siga o passo a passo no README interno.
 
-Ao enviar Ataque `150` e Defesa `90` para a operação `Add`, o serviço SOAP retorna o resultado `240`:
+---
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <AddResponse xmlns="http://tempuri.org/">
-      <AddResult>240</AddResult>
-    </AddResponse>
-  </soap:Body>
-</soap:Envelope>
-```
+## 📦 2. Aplicação SOAP
 
-## Instalação e execução
+A aplicação localizada na pasta `/soap` demonstra o consumo de um serviço legado baseado em contratos estritos (WSDL).
 
-### Backend
+- **Web Service Escolhido:** _(A colega preencherá o link e o nome aqui)_
+- **Formato de Dados:** XML (SOAP Envelope).
+- **Exemplo de Retorno:** _(A colega colocará o exemplo do XML recebido aqui)_
 
-Na raiz do projeto, crie e ative um ambiente virtual:
-
-#### Windows
-
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python app.py
-```
-
-#### Linux/macOS
-
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python app.py
-```
-
-### Frontend
-
-Quando a interface React/Vite estiver disponível:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## Dependências
-
-As dependências do backend estão listadas em [`backend/requirements.txt`](backend/requirements.txt):
-
-- `requests`: consumo da API REST;
-- `zeep`: consumo do Web Service SOAP.
+> **Instruções de execução:** Para rodar a aplicação SOAP, acesse a pasta [`/soap`](./soap/) e siga o passo a passo no README interno.
