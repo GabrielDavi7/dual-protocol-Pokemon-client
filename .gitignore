@@ -1,16 +1,39 @@
-# Ambientes Virtuais (Backend)
-backend/venv/
-backend/env/
+# ========================
+# Node.js / Frontend (React)
+# ========================
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
 
-# Arquivos de Cache do Python
+# ========================
+# Python / Backend (FastAPI)
+# ========================
+venv/
+env/
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
 
-# Dependências (Frontend)
-node_modules/
-dist/
+# ========================
+# Variáveis de Ambiente (Segurança)
+# ========================
+.env
+.env.*
+!.env.example
 
-# Configurações do VS Code e SO
+# ========================
+# Editores e IDEs (VS Code, etc)
+# ========================
 .vscode/
+.idea/
+*.swp
+*.swo
+
+# ========================
+# Arquivos de Sistema Operacional
+# ========================
 .DS_Store
+Thumbs.db
