@@ -1,4 +1,4 @@
-# 1. <img src="frontend/public/icone-21.png" alt="" width="40" align="absmiddle" /> CAMISA 21
+# <img src="frontend/public/estadio.png" alt="" width="40" align="absmiddle" /> CAMISA 21
 
 **CAMISA 21** é uma plataforma acadêmica de estatísticas de futebol com React, FastAPI e integração SOAP. A interface apresenta o acervo da Copa do Mundo 2026 disponível no Football Pool: partidas, seleções, jogadores, estádios, comparações e um laboratório SOAP.
 
