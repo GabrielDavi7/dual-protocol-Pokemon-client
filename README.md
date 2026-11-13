@@ -43,7 +43,7 @@ A aplicação localizada na pasta `/rest` funciona como uma Pokédex que consome
 
 ---
 
-## ⚽ 2. Aplicação SOAP (CAMISA 21)
+## <img src="soap/frontend/public/camisa.png" alt="" width="40" align="absmiddle" /> 2. Aplicação SOAP (CAMISA 21)
 
 A aplicação localizada na pasta [`/soap`](./soap/) é chamada **CAMISA 21**, uma plataforma de estatísticas de futebol que utiliza o Football Pool Web Service para consultar dados de partidas, seleções, jogadores, estádios e outras informações relacionadas à Copa do Mundo.
 
@@ -56,7 +56,7 @@ O projeto demonstra a comunicação entre sistemas utilizando **SOAP**, mensagen
 - **Documentação:** https://footballpool.dataflex.dev/info.wso
 - **WSDL utilizado:** https://footballpool.dataflex.dev/info.wso?WSDL
 
-### 🏟️ Exemplo de retorno SOAP
+### <img src="soap/frontend/public/estadio.png" alt="" width="40" align="absmiddle" /> Exemplo de retorno SOAP
 
 **Operação:** `GoalsScored`
 
