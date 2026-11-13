@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 
 const coresTipos = {
@@ -110,6 +110,12 @@ const geracoes = [
 
 const listaTipos = Object.keys(coresTipos).filter((t) => t !== "default");
 
+const obterGeracao = (idPokemon) => {
+  const limites = [151, 251, 386, 493, 649, 721, 809, 905, 1025];
+  const indice = limites.findIndex((limite) => idPokemon <= limite);
+  return indice === -1 ? "Especial" : `${indice + 1}ª geração`;
+};
+
 const gerarSoapXML = (poke) => {
   if (!poke) return "";
   return `<?xml version="1.0" encoding="utf-8"?>
@@ -186,6 +192,7 @@ const gerarSoapXML = (poke) => {
 };
 
 function App() {
+  const consultaTimeRef = useRef(null);
   const [telaAtiva, setTelaAtiva] = useState("inicio");
   const [formatoCodigo, setFormatoCodigo] = useState("json");
   const [busca, setBusca] = useState("");
@@ -198,6 +205,22 @@ function App() {
   const [listaCompleta, setListaCompleta] = useState([]);
   const [listaExibida, setListaExibida] = useState([]);
   const [pokemonAleatorio, setPokemonAleatorio] = useState(null);
+  const [timePokemon, setTimePokemon] = useState([]);
+  const [buscaTime, setBuscaTime] = useState("");
+  const [erroTime, setErroTime] = useState("");
+  const [carregandoTime, setCarregandoTime] = useState(false);
+  const [pokemonConsultadoTime, setPokemonConsultadoTime] = useState(null);
+  const [carregandoConsultaTime, setCarregandoConsultaTime] = useState(false);
+  const [erroConsultaTime, setErroConsultaTime] = useState("");
+
+  useEffect(() => {
+    if (pokemonConsultadoTime) {
+      consultaTimeRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [pokemonConsultadoTime]);
 
   const [tipoFiltro, setTipoFiltro] = useState("todos");
   const [geracaoFiltro, setGeracaoFiltro] = useState(0);
@@ -349,6 +372,74 @@ function App() {
   };
 
   const telaOcupada = pokemon || erro || carregando;
+  const sugestoesTime =
+    buscaTime.trim().length > 0
+      ? listaCompleta
+          .filter(
+            (p) =>
+              p.nome.includes(buscaTime.trim().toLowerCase()) &&
+              !timePokemon.some((membro) => membro.id === p.id),
+          )
+          .slice(0, 6)
+      : [];
+
+  const adicionarAoTime = async (novoPokemon) => {
+    if (
+      timePokemon.length >= 6 ||
+      timePokemon.some((membro) => membro.id === novoPokemon.id) ||
+      carregandoTime
+    ) {
+      return;
+    }
+
+    setCarregandoTime(true);
+    setErroTime("");
+    try {
+      const { data } = await axios.get(
+        `https://pokeapi.co/api/v2/pokemon/${novoPokemon.id}`,
+      );
+      const idEspecie = Number(
+        data.species.url.split("/").filter(Boolean).pop(),
+      );
+      const membroComDetalhes = {
+        ...novoPokemon,
+        tipos: data.types.map((tipo) => tipo.type.name),
+        geracao: obterGeracao(idEspecie),
+      };
+
+      setTimePokemon((timeAtual) =>
+        timeAtual.length < 6 &&
+        !timeAtual.some((membro) => membro.id === novoPokemon.id)
+          ? [...timeAtual, membroComDetalhes]
+          : timeAtual,
+      );
+      setBuscaTime("");
+    } catch {
+      setErroTime(
+        `Não foi possível carregar os dados de ${novoPokemon.nome.replaceAll("-", " ")}. Tente novamente.`,
+      );
+    } finally {
+      setCarregandoTime(false);
+    }
+  };
+
+  const consultarPokemonDoTime = async (membro) => {
+    setCarregandoConsultaTime(true);
+    setErroConsultaTime("");
+    setPokemonConsultadoTime(null);
+    try {
+      const { data } = await axios.get(
+        `http://127.0.0.1:8000/api/pokemon/${membro.nome}`,
+      );
+      setPokemonConsultadoTime(data);
+    } catch {
+      setErroConsultaTime(
+        `Não foi possível carregar a consulta de ${membro.nome.replaceAll("-", " ")}.`,
+      );
+    } finally {
+      setCarregandoConsultaTime(false);
+    }
+  };
 
   const jsonBytes = pokemon ? new Blob([JSON.stringify(pokemon)]).size : 0;
   const soapBytes = pokemon ? new Blob([gerarSoapXML(pokemon)]).size : 0;
@@ -396,6 +487,12 @@ function App() {
             className={`px-4 py-2 rounded-lg font-bold transition-all text-sm whitespace-nowrap ${telaAtiva === "galeria" ? "bg-slate-900 text-blue-400 shadow-md" : "text-red-100 hover:bg-red-500/50"}`}
           >
             📚 Galeria Total
+          </button>
+          <button
+            onClick={() => setTelaAtiva("time")}
+            className={`px-4 py-2 rounded-lg font-bold transition-all text-sm whitespace-nowrap ${telaAtiva === "time" ? "bg-slate-900 text-blue-400 shadow-md" : "text-red-100 hover:bg-red-500/50"}`}
+          >
+            ⚔️ Montar time
           </button>
           <button
             onClick={() => setTelaAtiva("json")}
@@ -904,6 +1001,370 @@ function App() {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        )}
+
+        {telaAtiva === "time" && (
+          <div className="mx-auto flex min-h-full w-full max-w-7xl flex-col p-5 sm:p-8">
+            <section className="relative z-20 mb-8 rounded-2xl border-2 border-slate-700 bg-slate-800/90 p-6 shadow-xl backdrop-blur-md sm:p-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-3xl font-black text-white sm:text-4xl">
+                    Montagem de time
+                  </h2>
+                  <p className="mt-2 font-medium text-slate-400">
+                    Escolha até seis Pokémon para formar sua equipe.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 self-start rounded-xl border border-slate-600 bg-slate-900/80 px-5 py-3 shadow-inner md:self-auto">
+                  <span className="text-2xl">⚔️</span>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                      Seu time
+                    </p>
+                    <p className="font-mono text-xl font-black text-white">
+                      {timePokemon.length}
+                      <span className="text-slate-500"> / 6</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 max-w-2xl">
+                <label
+                  htmlFor="team-pokemon-search"
+                  className="mb-2 block text-xs font-black uppercase tracking-widest text-slate-400"
+                >
+                  Adicionar Pokémon
+                </label>
+                <div className="relative">
+                  <input
+                    id="team-pokemon-search"
+                    type="text"
+                    value={buscaTime}
+                    onChange={(e) => setBuscaTime(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        sugestoesTime.length > 0 &&
+                        !carregandoTime
+                      ) {
+                        adicionarAoTime(sugestoesTime[0]);
+                      }
+                    }}
+                    disabled={timePokemon.length >= 6 || carregandoTime}
+                    placeholder={
+                      timePokemon.length >= 6
+                        ? "Seu time está completo"
+                        : carregandoTime
+                          ? "Carregando dados do Pokémon..."
+                          : "Busque por nome, por exemplo: pikachu"
+                    }
+                    className="w-full rounded-xl border-2 border-slate-600 bg-slate-900 px-5 py-4 font-semibold text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  {erroTime && (
+                    <p
+                      role="alert"
+                      className="mt-3 rounded-lg border border-red-500/30 bg-red-950/60 px-4 py-3 text-sm font-semibold text-red-300"
+                    >
+                      {erroTime}
+                    </p>
+                  )}
+                  {buscaTime.trim() && sugestoesTime.length > 0 && (
+                    <ul className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-xl border-2 border-slate-600 bg-slate-800 shadow-2xl">
+                      {sugestoesTime.map((p) => (
+                        <li key={`${p.id}-${p.nome}`}>
+                          <button
+                            type="button"
+                            onClick={() => adicionarAoTime(p)}
+                            disabled={carregandoTime}
+                            className="flex w-full items-center gap-3 border-b border-slate-700/60 px-5 py-2 text-left font-bold capitalize text-slate-300 transition-colors last:border-0 hover:bg-blue-600 hover:text-white disabled:cursor-wait disabled:opacity-60"
+                          >
+                            <img
+                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                              alt=""
+                              className="h-10 w-10 object-contain"
+                            />
+                            <span className="flex-1">{p.nome.replaceAll("-", " ")}</span>
+                            <span className="font-mono text-xs text-slate-500">
+                              Nº {String(p.id).padStart(4, "0")}
+                            </span>
+                            <span className="text-lg text-green-400">+</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {buscaTime.trim() &&
+                    listaCompleta.length > 0 &&
+                    sugestoesTime.length === 0 && (
+                      <div className="absolute inset-x-0 top-full z-50 mt-2 rounded-xl border border-slate-600 bg-slate-800 px-5 py-4 text-sm font-semibold text-slate-400 shadow-xl">
+                        Nenhum Pokémon disponível encontrado.
+                      </div>
+                    )}
+                </div>
+              </div>
+            </section>
+
+            <div className="relative z-0 grid flex-1 grid-cols-2 gap-3 pb-8 sm:grid-cols-3 sm:gap-5 lg:grid-cols-6">
+              {Array.from({ length: 6 }, (_, index) => {
+                const membro = timePokemon[index];
+                return (
+                  <article
+                    key={membro ? `${membro.id}-${membro.nome}` : `slot-${index}`}
+                    onClick={() =>
+                      membro && consultarPokemonDoTime(membro)
+                    }
+                    onKeyDown={(e) => {
+                      if (
+                        membro &&
+                        (e.key === "Enter" || e.key === " ")
+                      ) {
+                        e.preventDefault();
+                        consultarPokemonDoTime(membro);
+                      }
+                    }}
+                    tabIndex={membro ? 0 : undefined}
+                    aria-label={
+                      membro
+                        ? `Consultar ${membro.nome.replaceAll("-", " ")}. Pressione Enter para abrir.`
+                        : undefined
+                    }
+                    className={`group relative flex min-h-52 flex-col items-center justify-center overflow-hidden rounded-2xl border-2 p-4 text-center shadow-lg transition-all sm:min-h-64 ${
+                      membro
+                        ? "min-h-[310px] cursor-pointer border-slate-600 bg-slate-800/90 hover:-translate-y-1 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:min-h-[330px]"
+                        : "border-dashed border-slate-600/70 bg-slate-900/55"
+                    }`}
+                  >
+                    {membro ? (
+                      <>
+                        <span className="absolute left-3 top-3 font-mono text-xs font-bold text-slate-500">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setTimePokemon((timeAtual) =>
+                              timeAtual.filter((p) => p.id !== membro.id),
+                            );
+                            if (pokemonConsultadoTime?.id_pokedex === Number(membro.id)) {
+                              setPokemonConsultadoTime(null);
+                            }
+                          }}
+                          aria-label={`Remover ${membro.nome.replaceAll("-", " ")} do time`}
+                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-500/15 text-lg font-black text-red-300 transition hover:bg-red-500 hover:text-white"
+                        >
+                          ×
+                        </button>
+                        <img
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${membro.id}.png`}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${membro.id}.png`;
+                          }}
+                          alt={membro.nome}
+                          loading="lazy"
+                          className="h-28 w-28 object-contain drop-shadow-[0_12px_12px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-110 sm:h-36 sm:w-36"
+                        />
+                        <h3 className="mt-2 w-full truncate font-black capitalize text-white">
+                          {membro.nome.replaceAll("-", " ")}
+                        </h3>
+                        <p className="mt-1 font-mono text-xs font-bold text-slate-500">
+                          Nº {String(membro.id).padStart(4, "0")}
+                        </p>
+                        <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                          {membro.tipos.map((tipo) => (
+                            <span
+                              key={tipo}
+                              className={`${coresTipos[tipo] || coresTipos.default} rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-wide`}
+                            >
+                              {emojisTipos[tipo] || emojisTipos.default} {tipo}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="mt-2 text-[10px] font-black uppercase tracking-wider text-cyan-300">
+                          {membro.geracao}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-mono text-xs font-bold tracking-widest text-slate-600">
+                          ESPAÇO {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div className="my-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-dashed border-slate-700 text-3xl text-slate-600">
+                          +
+                        </div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                          Vazio
+                        </p>
+                      </>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+            {(carregandoConsultaTime || erroConsultaTime || pokemonConsultadoTime) && (
+              <section
+                ref={consultaTimeRef}
+                aria-live="polite"
+                aria-label="Consulta do Pokémon selecionado"
+                className="mb-10 rounded-3xl border-2 border-slate-700 bg-slate-800/95 p-6 shadow-2xl backdrop-blur-md sm:p-8"
+              >
+                {carregandoConsultaTime ? (
+                  <p className="py-12 text-center text-lg font-bold text-slate-400">
+                    Carregando consulta do Pokémon...
+                  </p>
+                ) : erroConsultaTime ? (
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-red-500/30 bg-red-950/60 p-5 font-semibold text-red-300"
+                  >
+                    {erroConsultaTime}
+                  </p>
+                ) : (
+                  <>
+                    <div className="mb-8 flex flex-col items-center gap-5 border-b border-slate-700 pb-7 sm:flex-row sm:items-center">
+                      <img
+                        src={pokemonConsultadoTime.imagem}
+                        alt={pokemonConsultadoTime.nome}
+                        className="h-36 w-36 object-contain drop-shadow-xl"
+                      />
+                      <div className="text-center sm:text-left">
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+                          Consulta do time
+                        </p>
+                        <h2 className="mt-1 text-4xl font-black capitalize text-white">
+                          {pokemonConsultadoTime.nome.replaceAll("-", " ")}
+                        </h2>
+                        <p className="mt-1 font-mono font-bold text-slate-400">
+                          Nº {String(pokemonConsultadoTime.id_pokedex).padStart(4, "0")}
+                        </p>
+                        <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                          {pokemonConsultadoTime.tipos.map((tipo) => (
+                            <span
+                              key={tipo}
+                              className={`${coresTipos[tipo] || coresTipos.default} rounded-full border px-3 py-1 text-xs font-black uppercase`}
+                            >
+                              {emojisTipos[tipo] || emojisTipos.default} {tipo}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-5">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4 text-center">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                              Altura
+                            </p>
+                            <p className="mt-1 text-xl font-black text-white">
+                              {pokemonConsultadoTime.altura_cm} cm
+                            </p>
+                          </div>
+                          <div className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4 text-center">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
+                              Peso
+                            </p>
+                            <p className="mt-1 text-xl font-black text-white">
+                              {pokemonConsultadoTime.peso_kg} kg
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+                          <h3 className="mb-4 text-center text-xs font-black uppercase tracking-widest text-slate-400">
+                            Habilidades
+                          </h3>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {pokemonConsultadoTime.habilidades.map((habilidade) => (
+                              <span
+                                key={habilidade}
+                                className="rounded-lg border border-violet-500/20 bg-violet-500/10 px-3 py-2 text-sm font-bold capitalize text-violet-300"
+                              >
+                                {habilidade.replaceAll("-", " ")}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+                          <h3 className="mb-4 text-center text-xs font-black uppercase tracking-widest text-slate-400">
+                            Linha evolutiva
+                          </h3>
+                          <div className="flex flex-wrap justify-center gap-2">
+                            {pokemonConsultadoTime.cadeia_evolucao.map((evolucao) => (
+                              <span
+                                key={evolucao.id}
+                                className={`rounded-lg border px-3 py-2 text-sm font-bold capitalize ${
+                                  Number(evolucao.id) ===
+                                  pokemonConsultadoTime.id_pokedex
+                                    ? "border-blue-500 bg-blue-500/20 text-blue-300"
+                                    : "border-slate-700 bg-slate-800 text-slate-300"
+                                }`}
+                              >
+                                {evolucao.nome.replaceAll("-", " ")}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-5">
+                        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+                          <h3 className="mb-5 text-center text-xs font-black uppercase tracking-widest text-slate-400">
+                            Status de batalha
+                          </h3>
+                          <div className="space-y-3">
+                            {Object.entries(pokemonConsultadoTime.status).map(
+                              ([nome, valor]) => (
+                                <div
+                                  key={nome}
+                                  className="flex items-center gap-3 text-xs"
+                                >
+                                  <span className="w-24 shrink-0 font-bold uppercase text-slate-400">
+                                    {nome.replaceAll("-", " ")}
+                                  </span>
+                                  <span className="w-8 text-right font-black text-white">
+                                    {valor}
+                                  </span>
+                                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-950">
+                                    <div
+                                      className="h-full rounded-full bg-blue-500"
+                                      style={{
+                                        width: `${Math.min((valor / 150) * 100, 100)}%`,
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5">
+                          <h3 className="mb-4 text-center text-xs font-black uppercase tracking-widest text-slate-400">
+                            Golpes disponíveis
+                          </h3>
+                          <div className="flex max-h-40 flex-wrap justify-center gap-2 overflow-y-auto">
+                            {pokemonConsultadoTime.movimentos.map((movimento) => (
+                              <span
+                                key={movimento}
+                                className="rounded-lg border border-red-800/30 bg-red-900/20 px-2.5 py-1.5 text-xs font-bold capitalize text-red-300"
+                              >
+                                {movimento.replaceAll("-", " ")}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </section>
             )}
           </div>
         )}

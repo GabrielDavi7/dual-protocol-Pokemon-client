@@ -9,6 +9,7 @@ Uma aplicação full-stack de portfólio acadêmico desenvolvida para demonstrar
 - **Arquitetura BFF (Backend for Frontend):** FastAPI no backend atuando como uma camada de tradução otimizada sobre a PokeAPI original.
 - **Cache Inteligente:** Implementação de `@lru_cache` (maxsize=100) no Python para zerar o overhead de requisições repetidas à API externa.
 - **Galeria Segmentada por Gerações & Tipos:** Filtros combinados dinâmicos para navegar por todas as gerações clássicas, especiais e Megas.
+- **Montagem de Time:** Crie uma equipe com até seis Pokémon, buscando na Pokédex e removendo integrantes.
 - **Enriquecimento de Dados:** Gritos oficiais em áudio (`cries`), árvore evolutiva recursiva interativa e rotas/locais dinamicamente coloridos por jogo.
 - **Benchmark Analítico em Tempo Real:** Painel comparativo interativo com gráficos de barras dinâmicos medindo o tamanho exato do payload em Bytes e o custo de CPU em milissegundos.
 
@@ -28,6 +29,7 @@ graph LR
     subgraph Frontend[Navegador]
         F -->|Serialização local| J[JSON.stringify]
         F -->|Serialização local| X[gerarSoapXML]
+        F -->|Montagem local de equipe, até 6 Pokémon| T[Time Pokémon]
         J --> M[Comparativo de payload e CPU]
         X --> M
     end
