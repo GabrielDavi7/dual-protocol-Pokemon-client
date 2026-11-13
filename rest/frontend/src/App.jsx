@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import pokemonLandscape from "../assets/pokemon.jpg";
 
 const coresTipos = {
   normal:
@@ -198,6 +197,7 @@ function App() {
   const [sugestoes, setSugestoes] = useState([]);
   const [listaCompleta, setListaCompleta] = useState([]);
   const [listaExibida, setListaExibida] = useState([]);
+  const [pokemonAleatorio, setPokemonAleatorio] = useState(null);
 
   const [tipoFiltro, setTipoFiltro] = useState("todos");
   const [geracaoFiltro, setGeracaoFiltro] = useState(0);
@@ -207,6 +207,28 @@ function App() {
     json: "0.0000",
     soap: "0.0000",
   });
+
+  const sortearPokemon = useCallback(() => {
+    const pokemonsDisponiveis = listaCompleta.filter((p) => {
+      const id = Number(p.id);
+      return Number.isInteger(id) && id >= 1 && id <= 1025;
+    });
+    const opcoes =
+      pokemonsDisponiveis.length > 1
+        ? pokemonsDisponiveis.filter((p) => p.id !== pokemonAleatorio?.id)
+        : pokemonsDisponiveis;
+    if (opcoes.length > 0) {
+      setPokemonAleatorio(
+        opcoes[Math.floor(Math.random() * opcoes.length)],
+      );
+    }
+  }, [listaCompleta, pokemonAleatorio]);
+
+  useEffect(() => {
+    if (telaAtiva === "inicio" && !pokemonAleatorio && listaCompleta.length) {
+      sortearPokemon();
+    }
+  }, [listaCompleta, pokemonAleatorio, sortearPokemon, telaAtiva]);
 
   useEffect(() => {
     if (pokemon) {
@@ -317,6 +339,15 @@ function App() {
     }
   };
 
+  const abrirTelaInicial = () => {
+    setTelaAtiva("inicio");
+    setPokemon(null);
+    setBusca("");
+    setErro("");
+    setMostrarPopup(false);
+    sortearPokemon();
+  };
+
   const telaOcupada = pokemon || erro || carregando;
 
   const jsonBytes = pokemon ? new Blob([JSON.stringify(pokemon)]).size : 0;
@@ -332,12 +363,7 @@ function App() {
     <div className="flex flex-col h-screen bg-slate-950 text-white font-sans overflow-hidden">
       <header className="w-full bg-red-600 border-b-[8px] border-red-800 px-6 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-50">
         <div
-          onClick={() => {
-            setTelaAtiva("inicio");
-            setPokemon(null);
-            setBusca("");
-            setErro("");
-          }}
+          onClick={abrirTelaInicial}
           className="flex items-center gap-6 cursor-pointer hover:opacity-80 transition-all hover:scale-105"
           title="Reiniciar e voltar para o início"
         >
@@ -360,8 +386,8 @@ function App() {
 
         <nav className="flex gap-2 bg-red-800/50 p-1.5 rounded-xl border border-red-700/50 shadow-inner overflow-x-auto">
           <button
-            onClick={() => setTelaAtiva("busca")}
-            className={`px-4 py-2 rounded-lg font-bold transition-all text-sm whitespace-nowrap ${telaAtiva === "busca" ? "bg-slate-900 text-blue-400 shadow-md" : "text-red-100 hover:bg-red-500/50"}`}
+            onClick={abrirTelaInicial}
+            className={`px-4 py-2 rounded-lg font-bold transition-all text-sm whitespace-nowrap ${telaAtiva === "busca" || telaAtiva === "inicio" ? "bg-slate-900 text-blue-400 shadow-md" : "text-red-100 hover:bg-red-500/50"}`}
           >
             🔍 Consulta
           </button>
@@ -384,14 +410,17 @@ function App() {
       <main
         className="flex-1 overflow-y-auto bg-slate-950 relative scrollbar-thin scrollbar-track-slate-950 scrollbar-thumb-slate-700"
         style={{
-          backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.48), rgba(2, 6, 23, 0.48)), url(${pokemonLandscape})`,
+          backgroundImage:
+            "linear-gradient(rgba(2, 6, 23, 0.48), rgba(2, 6, 23, 0.48)), url(/pokemon.jpg)",
           backgroundSize: "100% 100%",
           backgroundRepeat: "no-repeat",
         }}
       >
         {telaAtiva === "inicio" && (
           <section className="relative flex min-h-full w-full items-center justify-center overflow-hidden p-6 sm:p-10">
-            <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-white/15 bg-slate-950/75 p-6 shadow-2xl backdrop-blur-md sm:p-10">
+            <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-slate-800/90 via-slate-950/85 to-slate-900/90 p-6 shadow-[inset_0_1px_1px_rgba(255,255,255,0.18),0_25px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:p-10">
+              <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"></div>
+              <div className="pointer-events-none absolute -right-20 -top-28 h-64 w-64 rounded-full bg-white/10 blur-3xl"></div>
               <div className="mb-7 text-center">
                 <h2 className="text-3xl font-black text-white sm:text-4xl">
                   Encontre seu Pokémon
@@ -400,6 +429,31 @@ function App() {
                   Pesquise pelo nome para descobrir seus dados e habilidades.
                 </p>
               </div>
+              {pokemonAleatorio && (
+                <div className="relative mx-auto mb-7 flex aspect-square w-full max-w-[380px] flex-col items-center justify-center overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-white/[0.12] via-white/[0.04] to-cyan-300/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_18px_40px_rgba(0,0,0,0.35)]">
+                  <div className="pointer-events-none absolute left-1/2 top-[42%] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/15 blur-3xl sm:h-72 sm:w-72"></div>
+                  <img
+                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonAleatorio.id}.png`}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonAleatorio.id}.png`;
+                    }}
+                    alt={pokemonAleatorio.nome}
+                    className="relative z-10 h-[72%] w-[72%] object-contain drop-shadow-[0_18px_20px_rgba(0,0,0,0.5)]"
+                  />
+                  <div className="relative z-10 -mt-2 text-center">
+                    <p className="text-[10px] font-black uppercase tracking-[0.25em] text-cyan-200/80 sm:text-xs">
+                      Pokémon surpresa
+                    </p>
+                    <p className="mt-1 text-2xl font-black capitalize text-white sm:text-3xl">
+                      {pokemonAleatorio.nome.replaceAll("-", " ")}
+                    </p>
+                    <p className="mt-1 font-mono text-sm font-bold text-slate-300">
+                      Nº {String(pokemonAleatorio.id).padStart(4, "0")}
+                    </p>
+                  </div>
+                </div>
+              )}
               <div className="relative">
                 <div className="flex shadow-2xl">
                   <input
@@ -806,7 +860,6 @@ function App() {
                     className="bg-slate-800 border-2 border-slate-600 text-white font-bold px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500 capitalize cursor-pointer shadow-inner text-sm"
                   >
                     <option value="todos">🌍 Qualquer Tipo</option>
-                    <option value="mega">🧬 Somente Megas</option>
                     {listaTipos.map((tipo) => (
                       <option key={tipo} value={tipo}>
                         {emojisTipos[tipo]} {tipo}

@@ -6,20 +6,42 @@ Uma aplicação full-stack de portfólio acadêmico desenvolvida para demonstrar
 
 ## 🚀 Funcionalidades Principais
 
-* **Arquitetura BFF (Backend for Frontend):** FastAPI no backend atuando como uma camada de tradução otimizada sobre a PokeAPI original.
-* **Cache Inteligente:** Implementação de `@lru_cache` (maxsize=100) no Python para zerar o overhead de requisições repetidas à API externa.
-* **Galeria Segmentada por Gerações & Tipos:** Filtros combinados dinâmicos para navegar por todas as gerações clássicas, especiais e Megas.
-* **Enriquecimento de Dados:** Gritos oficiais em áudio (`cries`), árvore evolutiva recursiva interativa e rotas/locais dinamicamente coloridos por jogo.
-* **Benchmark Analítico em Tempo Real:** Painel comparativo interativo com gráficos de barras dinâmicos medindo o tamanho exato do payload em Bytes e o custo de CPU em milissegundos.
+- **Arquitetura BFF (Backend for Frontend):** FastAPI no backend atuando como uma camada de tradução otimizada sobre a PokeAPI original.
+- **Cache Inteligente:** Implementação de `@lru_cache` (maxsize=100) no Python para zerar o overhead de requisições repetidas à API externa.
+- **Galeria Segmentada por Gerações & Tipos:** Filtros combinados dinâmicos para navegar por todas as gerações clássicas, especiais e Megas.
+- **Enriquecimento de Dados:** Gritos oficiais em áudio (`cries`), árvore evolutiva recursiva interativa e rotas/locais dinamicamente coloridos por jogo.
+- **Benchmark Analítico em Tempo Real:** Painel comparativo interativo com gráficos de barras dinâmicos medindo o tamanho exato do payload em Bytes e o custo de CPU em milissegundos.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Backend:** Python 3.10+, FastAPI, Uvicorn, Axios, Requests
-* **Frontend:** React, Vite, Tailwind CSS, Axios
+- **Backend:** Python 3.10+, FastAPI, Uvicorn, Axios, Requests
+- **Frontend:** React, Vite, Tailwind CSS, Axios
 
 ---
+
+```mermaid
+graph LR
+    U[Usuário] --> F[Frontend React]
+
+    subgraph Frontend[Navegador]
+        F -->|Serialização local| J[JSON.stringify]
+        F -->|Serialização local| X[gerarSoapXML]
+        J --> M[Comparativo de payload e CPU]
+        X --> M
+    end
+
+    F -->|GET /api/pokemon/{nome}| R[Rota FastAPI]
+    R --> C{Cache lru_cache}
+    C -->|Acerto| D[Dados normalizados]
+    C -->|Falha de cache| P[PokeAPI]
+    P -->|Dados de Pokémon, espécie, evoluções e locais| E[Enriquecimento e normalização]
+    E -->|Armazena resultado em cache| D
+    D -->|Resposta JSON| F
+
+    F -->|Autocomplete e filtros por tipo| P
+```
 
 ## ⚙️ Tutorial para Executar o Projeto (Do Zero)
 
@@ -53,7 +75,8 @@ Crie um arquivo chamado `main.py` na raiz do backend e adicione as rotas da sua 
 ```bash
 uvicorn main:app --reload --port 8000
 ```
-*O servidor backend estará rodando em `http://127.0.0.1:8000`.*
+
+_O servidor backend estará rodando em `http://127.0.0.1:8000`._
 
 ### 3. Configurar e Iniciar o Frontend (React + Vite)
 
@@ -72,14 +95,15 @@ npx tailwindcss init -p
 # Instancie as bibliotecas e cole o código do App.jsx gerado nos passos anteriores
 npm run dev
 ```
-*Acesse a aplicação no navegador através do endereço fornecido pelo Vite (geralmente `http://localhost:5173`).*
+
+_Acesse a aplicação no navegador através do endereço fornecido pelo Vite (geralmente `http://localhost:5173`)._
 
 ---
 
-## 📊 Análise Comparativa: REST vs SOAP
+## 📊 Análise Comparativa: tipagem dos arquivos REST vs SOAP
 
-| Critério | REST (JSON) | SOAP (XML) |
-| :--- | :--- | :--- |
-| **Formato de Dados** | Leve e estruturado por chaves/valores | Verboso, baseado em tags `<Envelope>`, `<Body>` e fechos |
-| **Tamanho do Payload** | Compacto (~3.000 a 4.000 Bytes) | Elevado devido ao overhead de serialização (~7.000+ Bytes) |
-| **Custo de CPU** | Baixo consumo de ciclos de clock | Alto consumo para parseamento e concatenação de tags |
+| Critério               | REST (JSON)                           | SOAP (XML)                                                 |
+| :--------------------- | :------------------------------------ | :--------------------------------------------------------- |
+| **Formato de Dados**   | Leve e estruturado por chaves/valores | Verboso, baseado em tags `<Envelope>`, `<Body>` e fechos   |
+| **Tamanho do Payload** | Compacto (~3.000 a 4.000 Bytes)       | Elevado devido ao overhead de serialização (~7.000+ Bytes) |
+| **Custo de CPU**       | Baixo consumo de ciclos de clock      | Alto consumo para parseamento e concatenação de tags       |
