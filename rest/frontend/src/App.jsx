@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import pokemonLandscape from "../assets/pokemon.jpg";
 
 const coresTipos = {
   normal:
@@ -186,7 +187,7 @@ const gerarSoapXML = (poke) => {
 };
 
 function App() {
-  const [telaAtiva, setTelaAtiva] = useState("busca");
+  const [telaAtiva, setTelaAtiva] = useState("inicio");
   const [formatoCodigo, setFormatoCodigo] = useState("json");
   const [busca, setBusca] = useState("");
   const [pokemon, setPokemon] = useState(null);
@@ -332,7 +333,7 @@ function App() {
       <header className="w-full bg-red-600 border-b-[8px] border-red-800 px-6 py-4 flex items-center justify-between shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-50">
         <div
           onClick={() => {
-            setTelaAtiva("busca");
+            setTelaAtiva("inicio");
             setPokemon(null);
             setBusca("");
             setErro("");
@@ -380,7 +381,71 @@ function App() {
         </nav>
       </header>
 
-      <main className="flex-1 overflow-y-auto bg-slate-900 relative scrollbar-thin scrollbar-track-slate-950 scrollbar-thumb-slate-700">
+      <main
+        className="flex-1 overflow-y-auto bg-slate-950 relative scrollbar-thin scrollbar-track-slate-950 scrollbar-thumb-slate-700"
+        style={{
+          backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.48), rgba(2, 6, 23, 0.48)), url(${pokemonLandscape})`,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {telaAtiva === "inicio" && (
+          <section className="relative flex min-h-full w-full items-center justify-center overflow-hidden p-6 sm:p-10">
+            <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-white/15 bg-slate-950/75 p-6 shadow-2xl backdrop-blur-md sm:p-10">
+              <div className="mb-7 text-center">
+                <h2 className="text-3xl font-black text-white sm:text-4xl">
+                  Encontre seu Pokémon
+                </h2>
+                <p className="mt-2 font-medium text-slate-300">
+                  Pesquise pelo nome para descobrir seus dados e habilidades.
+                </p>
+              </div>
+              <div className="relative">
+                <div className="flex shadow-2xl">
+                  <input
+                    type="text"
+                    value={busca}
+                    onChange={lidarComDigitacao}
+                    onKeyDown={(e) => e.key === "Enter" && buscarPokemon()}
+                    placeholder="Ex: charizard, gengar, lucario..."
+                    className="min-w-0 flex-1 rounded-l-2xl border-2 border-r-0 border-slate-600 bg-slate-800 px-4 py-4 text-base font-semibold text-white transition-colors placeholder:text-slate-400 focus:border-blue-500 focus:outline-none sm:px-6 sm:text-lg"
+                  />
+                  <button
+                    onClick={() => buscarPokemon()}
+                    disabled={carregando}
+                    className="rounded-r-2xl border-2 border-blue-600 bg-blue-600 px-5 font-black tracking-wider text-white transition-all hover:bg-blue-500 disabled:border-slate-700 disabled:bg-slate-700 sm:px-8"
+                  >
+                    {carregando ? "⏳" : "BUSCAR"}
+                  </button>
+                </div>
+                {mostrarPopup && sugestoes.length > 0 && (
+                  <ul className="absolute top-full left-0 z-50 mt-2 w-[calc(100%-7rem)] overflow-hidden rounded-xl border-2 border-slate-600 bg-slate-800 shadow-2xl sm:w-[calc(100%-8rem)]">
+                    {sugestoes.map((sugestao) => (
+                      <li
+                        key={sugestao.nome}
+                        onClick={() => buscarPokemon(sugestao.nome)}
+                        className="flex cursor-pointer items-center gap-3 border-b border-slate-700/50 px-6 py-3 font-bold capitalize text-slate-300 transition-colors last:border-0 hover:bg-blue-600 hover:text-white"
+                      >
+                        <img
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${sugestao.id}.png`}
+                          alt=""
+                          className="h-8 w-8"
+                        />
+                        {sugestao.nome.replace("-", " ")}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {erro && (
+                <div className="mt-5 rounded-r-xl border-l-4 border-red-500 bg-red-900/60 px-5 py-3 font-medium text-red-200">
+                  {erro}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {telaAtiva === "busca" && (
           <div className="flex flex-col items-center p-8 min-h-full">
             <div
@@ -612,7 +677,6 @@ function App() {
                       </div>
                     )}
 
-
                   <div className="bg-slate-900/50 p-6 rounded-3xl border-2 border-slate-700/50">
                     <h3 className="text-slate-500 text-xs font-bold uppercase mb-4 tracking-widest text-center">
                       🎮 Aparece nos Jogos
@@ -641,7 +705,6 @@ function App() {
                       )}
                     </div>
                   </div>
-
 
                   <div className="bg-slate-900/50 p-6 rounded-3xl border-2 border-slate-700/50">
                     <h3 className="text-slate-500 text-xs font-bold uppercase mb-4 tracking-widest text-center">
@@ -675,7 +738,6 @@ function App() {
                       )}
                     </div>
                   </div>
-
 
                   <div className="bg-slate-900/50 p-6 rounded-3xl border-2 border-slate-700/50">
                     <h3 className="text-slate-500 text-xs font-bold uppercase mb-4 tracking-widest text-center">
@@ -717,7 +779,6 @@ function App() {
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3">
-
                 <div className="flex items-center gap-2 bg-slate-900/50 p-2 rounded-xl border border-slate-700/50 shadow-inner">
                   <span className="font-bold text-slate-400 text-sm uppercase tracking-widest hidden sm:inline px-2">
                     Geração:
@@ -734,7 +795,6 @@ function App() {
                     ))}
                   </select>
                 </div>
-
 
                 <div className="flex items-center gap-2 bg-slate-900/50 p-2 rounded-xl border border-slate-700/50 shadow-inner">
                   <span className="font-bold text-slate-400 text-sm uppercase tracking-widest hidden sm:inline px-2">
@@ -809,7 +869,7 @@ function App() {
                   onClick={() => setFormatoCodigo("soap")}
                   className={`px-8 py-3 rounded-t-2xl font-bold transition-all ${formatoCodigo === "soap" ? "bg-[#0a0a0a] text-blue-400 border-t-2 border-blue-500" : "bg-slate-800 text-slate-500 hover:bg-slate-700"}`}
                 >
-                  SOAP (XML)
+                  XML
                 </button>
               </div>
 
@@ -849,7 +909,7 @@ function App() {
                   <span className="ml-4 text-xs font-mono text-slate-400">
                     {formatoCodigo === "json"
                       ? `~/backend/rest/api/pokemon/${pokemon.nome.toLowerCase()}.json`
-                      : `~/backend/soap/ws/pokemon/${pokemon.nome.toLowerCase()}.xml`}
+                      : `~/backend/rest/ws/pokemon/${pokemon.nome.toLowerCase()}.xml`}
                   </span>
                 </div>
                 {formatoCodigo === "soap" && (
@@ -873,7 +933,7 @@ function App() {
 
             <div className="w-full max-w-4xl bg-slate-800/90 rounded-b-2xl border border-slate-700 p-6 shadow-2xl mb-12">
               <h3 className="text-slate-300 font-black text-xs uppercase tracking-widest mb-4 flex items-center gap-2">
-                📊 Gráfico Comparativo de Eficiência (REST vs SOAP)
+                📊 Gráfico Comparativo de tipagem de arquivos
               </h3>
 
               <div className="space-y-4">
@@ -907,7 +967,7 @@ function App() {
                           width: `${Math.max((soapBytes / maxBytes) * 100, 15)}%`,
                         }}
                       >
-                        SOAP (XML): {soapBytes} B
+                        XML: {soapBytes} B
                       </div>
                     </div>
                   </div>
@@ -947,7 +1007,7 @@ function App() {
                           width: `${Math.max((parseFloat(benchmark.soap) / maxTime) * 100, 15)}%`,
                         }}
                       >
-                        SOAP (XML): {benchmark.soap}ms
+                        XML: {benchmark.soap}ms
                       </div>
                     </div>
                   </div>
